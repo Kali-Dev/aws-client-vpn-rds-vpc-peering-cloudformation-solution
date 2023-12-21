@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Aurora MySQL Serverless DB in dev-system-network with Secrets Manager integration.
+
+Resources:
+  MyDBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group for RDS DB Instance
+      VpcId: !ImportValue dev-system-VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          CidrIp: 10.0.0.0/16 # Adjust CIDR to allow access from the shared-system-network
+
+  MyDBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS DB Instance
+      SubnetIds:
+        - !ImportValue dev-system-PrivateSubnet1Id
+        - !ImportValue dev-system-PrivateSubnet2Id
+
+  MyDBCluster:
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      Engine: aurora-mysql
+      EngineMode: serverless
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref MyDBSecurityGroup
+      ScalingConfiguration:
+        AutoPause: true
+        MinCapacity: 2
+        MaxCapacity: 16
+        SecondsUntilAutoPause: 300
+      DatabaseName: mydatabase
+      MasterUsername: admin
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref MyDBSecret, '::password}}']]
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-AuroraServerlessRDSCluster"
+
+  MyDBSecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: !Sub "${AWS::StackName}-MyDBSecret"
+      Description: Secret for RDS database
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\\'
+
+Outputs:
+  DBClusterIdentifier:
+    Description: The database cluster identifier
+    Value: !Ref MyDBCluster
+
+  DBSecretARN:
+    Description: The ARN of the secret holding the database credentials
+    Value: !Ref MyDBSecret
