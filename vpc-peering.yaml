@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Create a VPC peering connection between shared-system and dev-system networks.
+Description: Create a VPC peering connection between shared-system and dev-system networks with custom route tables and route associations.
 
 Resources:
   VpcPeeringConnection:
@@ -10,3 +10,53 @@ Resources:
       Tags:
         - Key: Name
           Value: VPC Peering between shared-system and dev-system
+
+  # Custom route tables for shared-system VPC
+  SharedCustomRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !ImportValue shared-system-VpcId
+
+  SharedSubnetRoute1:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref SharedCustomRouteTable
+      DestinationCidrBlock: '10.1.0.0/16'
+      VpcPeeringConnectionId: !Ref VpcPeeringConnection
+
+  SharedSubnetAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !ImportValue shared-system-PrivateSubnet1Id
+      RouteTableId: !Ref SharedCustomRouteTable
+
+  SharedSubnetAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !ImportValue shared-system-PrivateSubnet2Id
+      RouteTableId: !Ref SharedCustomRouteTable
+
+  # Custom route tables for dev-system VPC
+  DevCustomRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !ImportValue dev-system-VpcId
+
+  DevSubnetRoute1:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref DevCustomRouteTable
+      DestinationCidrBlock: '10.0.0.0/16'
+      VpcPeeringConnectionId: !Ref VpcPeeringConnection
+
+  DevSubnetAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !ImportValue dev-system-PrivateSubnet1Id
+      RouteTableId: !Ref DevCustomRouteTable
+
+  DevSubnetAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !ImportValue dev-system-PrivateSubnet2Id
+      RouteTableId: !Ref DevCustomRouteTable

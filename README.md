@@ -8,27 +8,19 @@ This project is a solution for a challenge to demonstrate advanced AWS infrastru
 - `dev-system.yaml`: Template for creating the development system VPC with public and private subnets.
 - `vpc-peering.yaml`: Template for establishing VPC peering between the shared and development system networks.
 - `rds-aurora-db-cluster.yaml`: Template for deploying an RDS Aurora MySQL Serverless database in the development system network.
+- `aws-client-vpn.yaml`: Template for deploying aws vpn client along with necessary authorizers and associations.
 
 ![CloudFormation designer view of RDS database template](rds-db-cf-designer.png)
+![Cloudformatin designer view of AWS VPN client](template1-designer.png)
 
 ## Progress
 
 - [x] **VPC Setup**: Successfully created VPCs for both shared and development systems, each with isolated subnets.
 - [x] **VPC Peering**: Established a peering connection between the VPCs, facilitating secure inter-VPC communication.
 - [x] **RDS Deployment**: Succesfully deployed Aurora Serverless MySQL RDS database within the development VPC, and also integrated AWS secrets manager for passwords.
-- [ ] AWS VPN Client setup in the shared system network (Pending).
-- [ ] Connectivity testing and finalization.
+- [x] AWS VPN Client setup in the shared system network (Pending).
+- [x] Connectivity testing and finalization.
 
-
-## Next Steps
-
-- **AWS VPN Client Configuration**: 
-  - Generate client and server certificates necessary for the VPN setup.
-  - Create and configure the AWS Client VPN Endpoint in the shared system network. This includes setting up authentication methods and authorization rules to control network access.
-  - Associate the VPN endpoint with the relevant subnets in the shared system VPC.
-
-- **VPN Connectivity Testing**:
-  - Install and configure an OpenVPN client on a local machine using the generated client certificates.
-  - Establish a VPN connection to the shared system network and ensure secure communication channels are operational.
-  - Test connectivity to the Aurora Serverless MySQL RDS database in the dev-system network via the VPN connection, ensuring that the database is accessible only through the VPN.
+## Final Demo:
+[![Watch the video](https://img.youtube.com/vi/kkISL88uSTw/maxresdefault.jpg)](https://youtu.be/kkISL88uSTw)
 

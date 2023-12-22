@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Client VPN setup for shared-system-network with mutual authentication and proper routing to dev-system-network
+
+Parameters:
+  ServerCertificateArn:
+    Type: String
+    Description: The ARN of the server certificate for the VPN.
+  ClientCidrBlock:
+    Type: String
+    Default: '10.2.0.0/16'
+    Description: The CIDR block to be used by the VPN clients.
+
+Resources:
+  ClientVpnEndpoint:
+    Type: 'AWS::EC2::ClientVpnEndpoint'
+    Properties:
+      AuthenticationOptions:
+        - Type: certificate-authentication
+          MutualAuthentication:
+            ClientRootCertificateChainArn: !Ref ServerCertificateArn
+      ClientCidrBlock: !Ref ClientCidrBlock
+      ConnectionLogOptions:
+        Enabled: false
+      ServerCertificateArn: !Ref ServerCertificateArn
+      SplitTunnel: true
+      VpcId:
+        'Fn::ImportValue': 'shared-system-VpcId'
+
+  ClientVpnAuthorizationRule:
+    Type: 'AWS::EC2::ClientVpnAuthorizationRule'
+    Properties:
+      ClientVpnEndpointId: !Ref ClientVpnEndpoint
+      TargetNetworkCidr: '10.1.0.0/16' # CIDR of the dev-system-network
+      AuthorizeAllGroups: true
+
+  # Associate with both private subnets of the shared-system VPC
+  ClientVpnAssociation1:
+    Type: 'AWS::EC2::ClientVpnTargetNetworkAssociation'
+    Properties:
+      ClientVpnEndpointId: !Ref ClientVpnEndpoint
+      SubnetId:
+        'Fn::ImportValue': 'shared-system-PrivateSubnet1Id'
+  
+  ClientVpnAssociation2:
+    Type: 'AWS::EC2::ClientVpnTargetNetworkAssociation'
+    Properties:
+      ClientVpnEndpointId: !Ref ClientVpnEndpoint
+      SubnetId:
+        'Fn::ImportValue': 'shared-system-PrivateSubnet2Id'
+
+Outputs:
+  ClientVpnEndpointId:
+    Description: The ID of the Client VPN Endpoint
+    Value: !Ref ClientVpnEndpoint
